@@ -1,0 +1,30 @@
+type User {
+    name: String!
+    email: String! @unique
+    imageUrl: String!
+    articles: [Article] @relation
+    links: [Link] @relation
+    images: [Image] @relation
+}
+
+type Article {
+    title: String!
+    description: String!
+    user: User!
+}
+
+type Link {
+    title: String!
+    url: String!
+    user: User! @relation
+}
+
+type Image {
+    title: String!
+    imageUrl: String!
+    user: User! @relation
+}
+
+type Query {
+    findUserByEmail(email: String!): User
+}

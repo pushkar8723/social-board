@@ -18,7 +18,8 @@ export default {
         watchOptions: {
             poll: true,
             ignored: /node_modules/,
-        }
+        },
+        historyApiFallback: true,
     },
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
@@ -43,6 +44,6 @@ export default {
         },
     },
     plugins: [
-        htmlPlugin
-    ]
-}
+        htmlPlugin,
+    ],
+};

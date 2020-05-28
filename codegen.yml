@@ -1,6 +1,19 @@
-schema:
-    - "src/lambda/schema/**/*.schema.ts"
+
 generates:
+  ./src/generated/fragmentTypes.json:
+    schema:
+      - "src/lambda/schema/**/*.schema.ts"
+    plugins:
+      - fragment-matcher
   ./src/generated/types.d.ts:
+    schema:
+      - "src/lambda/schema/**/*.schema.ts"
+    plugins:
+      - typescript
+  ./src/generated/upsteam.types.d.ts:
+    schema:
+      - https://graphql.fauna.com/graphql:
+          headers:
+            authorization: bearer ${FAUNADB_SERVER_SECRET}
     plugins:
       - typescript
