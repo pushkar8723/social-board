@@ -106,6 +106,7 @@ const SubmitBtn = styled.button`
     min-width: 100px;
     font-size: 14px;
     cursor: pointer;
+    background-color: #fff;
 
     &:focus {
         border: 1px solid #2283d2;
@@ -114,7 +115,7 @@ const SubmitBtn = styled.button`
 `;
 
 interface ICreatePost {
-    userId: String
+    idToken: String
 }
 
 export default function (props: ICreatePost) {
@@ -124,7 +125,7 @@ export default function (props: ICreatePost) {
     const [url, setUrl] = useState('');
     const [imageUrl, setImageUrl] = useState('');
     const [loading, setLoading] = useState(false);
-    const { userId } = props;
+    const { idToken } = props;
 
     const reset = () => {
         setTitle('');
@@ -185,7 +186,7 @@ export default function (props: ICreatePost) {
         <Mutation<{ createPost: Post}>
             context={{
                 headers: {
-                    user_id: userId,
+                    id_token: idToken,
                 },
             }}
             update={cacheUpdateFn}

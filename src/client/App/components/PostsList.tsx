@@ -4,10 +4,10 @@ import Post from './Post';
 
 interface IPostsProps {
     posts: Array<Article | Link | Image>;
-    userId: string;
+    idToken: string;
 }
 
 export default function (props: IPostsProps) {
-    const { posts, userId } = props;
-    return <>{posts.map((post) => (<Post key={post.id} post={post} userId={userId} />))}</>;
+    const { posts, idToken } = props;
+    return <>{posts.map((post) => (<Post key={post.id} post={post} idToken={idToken} />))}</>;
 }

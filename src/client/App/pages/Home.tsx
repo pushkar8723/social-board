@@ -17,6 +17,7 @@ const Container = styled.div`
 export default function () {
     const logout = (state: IAppState) => () => {
         localStorage.removeItem('user');
+        localStorage.removeItem('idToken');
         state.setUser(null);
     };
 
@@ -30,7 +31,7 @@ export default function () {
                             query={GET_POSTS}
                             context={{
                                 headers: {
-                                    user_id: state.user.id,
+                                    id_token: state.idToken,
                                 },
                             }}
                         >
@@ -45,10 +46,10 @@ export default function () {
                                     if (data) {
                                         return (
                                             <>
-                                                <CreatePost userId={state.user.id} />
+                                                <CreatePost idToken={state.idToken} />
                                                 <PostsList
                                                     posts={data.getPosts}
-                                                    userId={state.user.id}
+                                                    idToken={state.idToken}
                                                 />
                                             </>
                                         );

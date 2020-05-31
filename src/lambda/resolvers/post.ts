@@ -1,16 +1,20 @@
 import { execute, makePromise } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
-import fetch from 'node-fetch';
+import fetch from 'cross-fetch';
 import {
     Article as UpstreamArticle,
     Link as UpstreamLink,
     Image as UpstreamImage,
 } from '../../generated/upsteam.types.d';
-import { Article, Image, Link } from '../../generated/types.d';
+import {
+    Article, Image, Link,
+    MutationCreatePostArgs, MutationDeletePostArgs,
+} from '../../generated/types.d';
 import {
     createArticle, createImage, createLink, getUserPosts,
     getArticle, getImage, getLink, deleteArticle, deleteLink, deleteImage,
-} from './queries/postQuries';
+} from './queries/postQueries';
+import { IContext } from '../types.d';
 
 const client = new HttpLink({
     uri: 'https://graphql.fauna.com/graphql',
@@ -23,7 +27,7 @@ const client = new HttpLink({
 
 const resolvers = {
     Post: {
-        __resolveType(post: Article | Link | Image) {
+        __resolveType(post: Article & Link & Image) {
             if (post.description) {
                 return 'Article';
             }
@@ -37,11 +41,11 @@ const resolvers = {
         },
     },
     Query: {
-        getPosts: async (parent, args, context) => {
+        getPosts: async (parent: undefined, args: undefined, context: IContext) => {
             const resp = await makePromise(
                 execute(
                     client,
-                    { query: getUserPosts, variables: { id: context.userId } },
+                    { query: getUserPosts, variables: { id: context.user.id } },
                 ),
             );
             if (resp.data.findUserByID) {
@@ -51,17 +55,20 @@ const resolvers = {
                             id: article._id,
                             title: article.title,
                             description: article.description,
+                            user: context.user,
                         }),
                     ),
                     ...resp.data.findUserByID.links.data.map((link: UpstreamLink) : Link => ({
                         id: link._id,
                         title: link.title,
                         url: link.url,
+                        user: context.user,
                     })),
                     ...resp.data.findUserByID.images.data.map((image: UpstreamImage) : Image => ({
                         id: image._id,
                         title: image.title,
                         imageUrl: image.imageUrl,
+                        user: context.user,
                     })),
                 ];
             }
@@ -69,19 +76,19 @@ const resolvers = {
         },
     },
     Mutation: {
-        createPost: async (parent: any, arg: any, context: any):
+        createPost: async (parent: undefined, arg: MutationCreatePostArgs, context: IContext):
             Promise<Article | Link | Image> => {
             const {
                 type, title, description, url, imageUrl,
             } = arg;
-            const { userId } = context;
+            const { user } = context;
             if (type === 'Article') {
                 const resp = await makePromise(
                     execute(
                         client,
                         {
                             query: createArticle,
-                            variables: { title, description, userId },
+                            variables: { title, description, userId: user.id },
                         },
                     ),
                 );
@@ -90,6 +97,7 @@ const resolvers = {
                         id: resp.data.createArticle._id,
                         title: resp.data.createArticle.title,
                         description: resp.data.createArticle.description,
+                        user: context.user,
                     };
                 }
             } else if (type === 'Link') {
@@ -98,7 +106,7 @@ const resolvers = {
                         client,
                         {
                             query: createLink,
-                            variables: { title, url, userId },
+                            variables: { title, url, userId: user.id },
                         },
                     ),
                 );
@@ -107,6 +115,7 @@ const resolvers = {
                         id: resp.data.createLink._id,
                         title: resp.data.createLink.title,
                         url: resp.data.createLink.url,
+                        user: context.user,
                     };
                 }
             } else if (type === 'Image') {
@@ -115,7 +124,7 @@ const resolvers = {
                         client,
                         {
                             query: createImage,
-                            variables: { title, imageUrl, userId },
+                            variables: { title, imageUrl, userId: user.id },
                         },
                     ),
                 );
@@ -124,15 +133,16 @@ const resolvers = {
                         id: resp.data.createImage._id,
                         title: resp.data.createImage.title,
                         imageUrl: resp.data.createImage.imageUrl,
+                        user: context.user,
                     };
                 }
             }
             return null;
         },
-        deletePost: async (parent: any, arg: any, context: any):
+        deletePost: async (parent: undefined, arg: MutationDeletePostArgs, context: any):
             Promise<Article | Link | Image> => {
             const { type, id } = arg;
-            const { userId } = context;
+            const { user } = context;
             if (type === 'Article') {
                 const resp = await makePromise(
                     execute(
@@ -143,7 +153,7 @@ const resolvers = {
                         },
                     ),
                 );
-                if (resp.data.findArticleByID.user._id === userId) {
+                if (resp.data.findArticleByID.user._id === user.id) {
                     const deleteResp = await makePromise(
                         execute(
                             client,
@@ -158,6 +168,7 @@ const resolvers = {
                         id: _id,
                         title,
                         description,
+                        user: context.user,
                     };
                 }
             }
@@ -171,7 +182,7 @@ const resolvers = {
                         },
                     ),
                 );
-                if (resp.data.findLinkByID.user._id === userId) {
+                if (resp.data.findLinkByID.user._id === user.id) {
                     const deleteResp = await makePromise(
                         execute(
                             client,
@@ -186,6 +197,7 @@ const resolvers = {
                         id: _id,
                         title,
                         url,
+                        user: context.user,
                     };
                 }
             }
@@ -199,7 +211,7 @@ const resolvers = {
                         },
                     ),
                 );
-                if (resp.data.findImageByID.user._id === userId) {
+                if (resp.data.findImageByID.user._id === user.id) {
                     const deleteResp = await makePromise(
                         execute(
                             client,
@@ -214,6 +226,7 @@ const resolvers = {
                         id: _id,
                         title,
                         imageUrl,
+                        user: context.user,
                     };
                 }
             }

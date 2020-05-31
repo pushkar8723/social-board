@@ -48,21 +48,12 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
     const [error, setError] = useState();
     const [loading, setLoading] = useState(false);
 
-    const QUERY_USER_DATA = gql`
-        query($email: String) {
-            getUser(email: $email) {
+    const LOGIN_USER = gql`
+        mutation LoginUser($idToken: String!) {
+            loginUser(idToken: $idToken) {
                 id
                 name
-                imageUrl
-            }
-        }
-    `;
-
-    const CREATE_USER = gql`
-        mutation($data: createUserInput) {
-            createUser(data: $data) {
-                id
-                name
+                email
                 imageUrl
             }
         }
@@ -70,30 +61,18 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
 
     const loginUser = async (user: GoogleLoginResponse) => {
         setLoading(true);
-        const resp = await props.client.query({
-            query: QUERY_USER_DATA,
+        const resp = await props.client.mutate({
+            mutation: LOGIN_USER,
             variables: {
-                email: user.profileObj.email,
+                idToken: user.tokenId,
             },
         });
-        if (resp.data.getUser === null) {
-            const createResp = await props.client.mutate({
-                mutation: CREATE_USER,
-                variables: {
-                    data: {
-                        name: user.profileObj.name,
-                        email: user.profileObj.email,
-                        imageUrl: user.profileObj.imageUrl,
-                    },
-                },
-            });
-            setLoading(false);
-            localStorage.setItem('user', JSON.stringify(createResp.data.createUser));
-            props.state.setUser(createResp.data.createUser);
-        } else {
-            setLoading(false);
-            localStorage.setItem('user', JSON.stringify(resp.data.getUser));
-            props.state.setUser(resp.data.getUser);
+        setLoading(false);
+        if (resp.data.loginUser) {
+            localStorage.setItem('user', JSON.stringify(resp.data.loginUser));
+            localStorage.setItem('idToken', user.tokenId);
+            props.state.setUser(resp.data.loginUser);
+            props.state.setIdToken(user.tokenId);
         }
     };
 
@@ -117,8 +96,8 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
                     onFailure={setError}
                     disabled={loading}
                 />
-                <div>{error}</div>
             </LoginBox>
+            <div>{error}</div>
         </Container>
     );
 });

@@ -1,8 +1,10 @@
 import { execute, makePromise } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
-import { gql } from 'apollo-server-lambda';
-import fetch from 'node-fetch';
-import { QueryGetUserArgs, MutationCreateUserArgs } from '../../generated/types.d';
+import fetch from 'cross-fetch';
+import { AuthenticationError } from 'apollo-server-lambda';
+import { MutationLoginUserArgs, User } from '../../generated/types.d';
+import { getUser, createUser } from './queries/userQueries';
+import { ITokenBody, IError } from '../types.d';
 
 const client = new HttpLink({
     uri: 'https://graphql.fauna.com/graphql',
@@ -12,53 +14,58 @@ const client = new HttpLink({
     },
 });
 
-
 const resolvers = {
-    Query: {
-        getUser: async (parent, args: QueryGetUserArgs) => {
-            const query = gql`
-                query($email: String!) {
-                    findUserByEmail(email: $email) {
-                        _id
-                        name
-                        imageUrl
-                    }
-                }
-            `;
-            const resp = await makePromise(execute(client, { query, variables: args }));
-            if (resp.data.findUserByEmail) {
-                const { _id, name, imageUrl } = resp.data.findUserByEmail;
-                return {
-                    id: _id,
-                    name,
-                    imageUrl,
-                    email: args.email,
-                };
-            }
-            return null;
-        },
-    },
     Mutation: {
-        createUser: async (parent, args: MutationCreateUserArgs) => {
-            const query = gql`
-                mutation($data: UserInput!) {
-                    createUser(data: $data) {
-                        _id
-                        name
-                        email
-                        imageUrl
+        loginUser: async (parent: undefined, args: MutationLoginUserArgs): Promise<User> => {
+            const resp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${args.idToken}`);
+            if (resp.ok) {
+                const body: ITokenBody & IError = await resp.json();
+                if (body.email) {
+                    const res = await makePromise(
+                        execute(
+                            client,
+                            { query: getUser, variables: { email: body.email } },
+                        ),
+                    );
+                    if (res.data.findUserByEmail) {
+                        const {
+                            _id, name, email, imageUrl,
+                        } = res.data.findUserByEmail;
+                        return {
+                            id: _id,
+                            name,
+                            email,
+                            imageUrl,
+                        };
+                    }
+                    const createResp = await makePromise(
+                        execute(
+                            client,
+                            {
+                                query: createUser,
+                                variables: {
+                                    data: {
+                                        name: body.name,
+                                        email: body.email,
+                                        imageUrl: body.picture,
+                                    },
+                                },
+                            },
+                        ),
+                    );
+                    if (createResp.data.createUser) {
+                        const {
+                            _id, name, email, imageUrl,
+                        } = createResp.data.createUser;
+                        return {
+                            id: _id,
+                            name,
+                            email,
+                            imageUrl,
+                        };
                     }
                 }
-            `;
-            const resp = await makePromise(execute(client, { query, variables: args }));
-            if (resp.data.createUser) {
-                const { _id, name, imageUrl } = resp.data.createUser;
-                return {
-                    id: _id,
-                    name,
-                    imageUrl,
-                    email: args.data.email,
-                };
+                throw new AuthenticationError(body.error_description);
             }
             return null;
         },

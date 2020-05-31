@@ -43,7 +43,9 @@ export interface IUserState {
 
 export interface IAppState {
     user: IUserState;
+    idToken: string;
     setUser: Dispatch<IUserState>;
+    setIdToken: Dispatch<string>;
 }
 
 const AppState = createContext<IAppState>(null);
@@ -53,9 +55,14 @@ export const AppStateConsumer = AppState.Consumer;
 export default function App() {
     const savedUser = JSON.parse(localStorage.getItem('user'));
     const [user, setUser] = useState<IUserState>(savedUser);
+    const [idToken, setIdToken] = useState<string>(localStorage.getItem('idToken'));
 
     return (
-        <AppState.Provider value={{ user, setUser }}>
+        <AppState.Provider
+            value={{
+                user, idToken, setUser, setIdToken,
+            }}
+        >
             <GlobalStyle />
             <Router>
                 <Switch>

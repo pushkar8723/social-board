@@ -24,6 +24,7 @@ const Btn = styled.button`
     text-align: center;
     padding-left: 12px;
     cursor: pointer;
+    background-color: #fff;
 
     &:focus {
         border: 1px solid #2283d2;
@@ -35,12 +36,12 @@ type Post = Article | Link | Image;
 
 interface IPostProp {
     post: Post;
-    userId: string;
+    idToken: string;
 }
 
 export default function (props: IPostProp) {
     const [loading, setLoading] = useState(false);
-    const { post, userId } = props;
+    const { post, idToken } = props;
 
     const deletePostHandler = (deleteFn: () => void) => () => {
         setLoading(true);
@@ -60,7 +61,7 @@ export default function (props: IPostProp) {
     case 'Article':
         return (
             <Mutation<{ deletePost: Article }>
-                context={{ headers: { user_id: userId } }}
+                context={{ headers: { id_token: idToken } }}
                 mutation={DELETE_POSTS}
                 variables={{ id: post.id, type: 'Article' }}
                 update={updateFn}
@@ -82,7 +83,7 @@ export default function (props: IPostProp) {
     case 'Link':
         return (
             <Mutation<{ deletePost: Link }>
-                context={{ headers: { user_id: userId } }}
+                context={{ headers: { id_token: idToken } }}
                 mutation={DELETE_POSTS}
                 variables={{ id: post.id, type: 'Link' }}
                 update={updateFn}
@@ -106,7 +107,7 @@ export default function (props: IPostProp) {
     case 'Image':
         return (
             <Mutation<{ deletePost: Image }>
-                context={{ headers: { user_id: userId } }}
+                context={{ headers: { id_token: idToken } }}
                 mutation={DELETE_POSTS}
                 variables={{ id: post.id, type: 'Image' }}
                 update={updateFn}

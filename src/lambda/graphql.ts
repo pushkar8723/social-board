@@ -1,25 +1,31 @@
-import { ApolloServer } from 'apollo-server-lambda';
-import { mergeSchemas, makeExecutableSchema } from 'graphql-tools';
+import { ApolloServer, mergeSchemas, makeExecutableSchema } from 'apollo-server-lambda';
 import userResolver from './resolvers/user';
 import postResolver from './resolvers/post';
 import userSchema from './schema/user.schema';
 import postSchema from './schema/post.schema';
+import linkSchema from './schema/link.schema';
+import LoggedInDirective from './directives/LoggedInDirective';
 
 const server = new ApolloServer({
     schema: mergeSchemas({
         schemas: [
             makeExecutableSchema({ typeDefs: userSchema }),
             makeExecutableSchema({ typeDefs: postSchema }),
+            linkSchema,
         ],
         resolvers: [
             userResolver,
             postResolver,
         ],
+        schemaDirectives: {
+            loggedIn: LoggedInDirective,
+        },
+        mergeDirectives: true,
     }),
     introspection: true,
     playground: true,
     context: ({ event }) => ({
-        userId: event.headers.user_id,
+        idToken: event.headers.id_token,
     }),
 });
 

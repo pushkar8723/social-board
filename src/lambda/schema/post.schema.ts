@@ -1,6 +1,8 @@
 import gql from 'graphql-tag';
 
 export default gql`
+    directive @loggedIn on FIELD_DEFINITION
+
     interface Post {
         id: ID!
         title: String!
@@ -25,7 +27,7 @@ export default gql`
     }
 
     type Query {
-        getPosts: [Post]
+        getPosts: [Post] @loggedIn
     }
 
     type Mutation {
@@ -35,7 +37,7 @@ export default gql`
             description: String
             url: String
             imageUrl: String
-        ): Post
-        deletePost(type: String!, id: ID!): Post
+        ): Post @loggedIn
+        deletePost(type: String!, id: ID!): Post @loggedIn
     }
 `;
