@@ -19,11 +19,12 @@ export default function () {
         localStorage.removeItem('user');
         localStorage.removeItem('idToken');
         state.setUser(null);
+        state.setIdToken(null);
     };
 
     return (
         <AppStateConsumer>
-            {(state: IAppState) => (state.user ? (
+            {(state: IAppState) => (state.idToken ? (
                 <>
                     <Header logout={logout(state)} />
                     <Container>
@@ -41,6 +42,11 @@ export default function () {
                                         return <div>...loading</div>;
                                     }
                                     if (error) {
+                                        error.graphQLErrors.forEach((err) => {
+                                            if (err.extensions.code === 'UNAUTHENTICATED') {
+                                                logout(state)();
+                                            }
+                                        });
                                         return <div>error!</div>;
                                     }
                                     if (data) {

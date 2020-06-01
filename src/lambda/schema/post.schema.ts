@@ -28,6 +28,7 @@ export default gql`
 
     type Query {
         getPosts: [Post] @loggedIn
+        getAllPosts: [Post]
     }
 
     type Mutation {

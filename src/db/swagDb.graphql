@@ -27,4 +27,7 @@ type Image {
 
 type Query {
     findUserByEmail(email: String!): User
+    getAllArticles: [Article]
+    getAllLinks: [Link]
+    getAllImages: [Image]
 }

@@ -12,7 +12,7 @@ import {
 } from '../../generated/types.d';
 import {
     createArticle, createImage, createLink, getUserPosts,
-    getArticle, getImage, getLink, deleteArticle, deleteLink, deleteImage,
+    getArticle, getImage, getLink, deleteArticle, deleteLink, deleteImage, getAllPosts,
 } from './queries/postQueries';
 import { IContext } from '../types.d';
 
@@ -70,6 +70,53 @@ const resolvers = {
                         imageUrl: image.imageUrl,
                         user: context.user,
                     })),
+                ];
+            }
+            return null;
+        },
+        getAllPosts: async () => {
+            const resp = await makePromise(execute(client, { query: getAllPosts }));
+            if (resp.data) {
+                return [
+                    ...resp.data.getAllArticles.data.map(
+                        (article: UpstreamArticle) : Article => ({
+                            id: article._id,
+                            title: article.title,
+                            description: article.description,
+                            user: {
+                                id: article.user._id,
+                                name: article.user.name,
+                                email: article.user.email,
+                                imageUrl: article.user.imageUrl,
+                            },
+                        }),
+                    ),
+                    ...resp.data.getAllLinks.data.map(
+                        (link: UpstreamLink) : Link => ({
+                            id: link._id,
+                            title: link.title,
+                            url: link.url,
+                            user: {
+                                id: link.user._id,
+                                name: link.user.name,
+                                email: link.user.email,
+                                imageUrl: link.user.imageUrl,
+                            },
+                        }),
+                    ),
+                    ...resp.data.getAllImages.data.map(
+                        (image: UpstreamImage) : Image => ({
+                            id: image._id,
+                            title: image.title,
+                            imageUrl: image.imageUrl,
+                            user: {
+                                id: image.user._id,
+                                name: image.user.name,
+                                email: image.user.email,
+                                imageUrl: image.user.imageUrl,
+                            },
+                        }),
+                    ),
                 ];
             }
             return null;

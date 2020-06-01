@@ -71,8 +71,8 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
         if (resp.data.loginUser) {
             localStorage.setItem('user', JSON.stringify(resp.data.loginUser));
             localStorage.setItem('idToken', user.tokenId);
-            props.state.setUser(resp.data.loginUser);
             props.state.setIdToken(user.tokenId);
+            props.state.setUser(resp.data.loginUser);
         }
     };
 
@@ -105,7 +105,7 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
 export default function () {
     return (
         <AppStateConsumer>
-            {(state) => (state.user ? <Redirect to={{ pathname: '/home' }} /> : <Login state={state} />)}
+            {(state) => (state.idToken ? <Redirect to={{ pathname: '/home' }} /> : <Login state={state} />)}
         </AppStateConsumer>
     );
 }

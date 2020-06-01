@@ -1,10 +1,18 @@
 import webpack from 'webpack';
+import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebPackPlugin from 'html-webpack-plugin';
 
 const htmlPlugin = new HtmlWebPackPlugin({
     template: './src/client/index.html',
     filename: './index.html',
 });
+
+const copyPlugin = new CopyPlugin({
+    patterns: [
+        { from: './_redirects', to: './' },
+    ],
+});
+
 
 export default {
     entry: './src/client/index.tsx',
@@ -45,5 +53,6 @@ export default {
     },
     plugins: [
         htmlPlugin,
+        copyPlugin,
     ],
 };

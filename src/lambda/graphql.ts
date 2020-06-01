@@ -5,6 +5,7 @@ import userSchema from './schema/user.schema';
 import postSchema from './schema/post.schema';
 import linkSchema from './schema/link.schema';
 import LoggedInDirective from './directives/LoggedInDirective';
+import MaskDirective from './directives/MaskDirective';
 
 const server = new ApolloServer({
     schema: mergeSchemas({
@@ -19,6 +20,7 @@ const server = new ApolloServer({
         ],
         schemaDirectives: {
             loggedIn: LoggedInDirective,
+            mask: MaskDirective,
         },
         mergeDirectives: true,
     }),

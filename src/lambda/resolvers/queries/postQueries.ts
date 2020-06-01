@@ -28,6 +28,52 @@ export const getUserPosts = gql`
     }
 `;
 
+export const getAllPosts = gql`
+    query GetAllPosts {
+        getAllArticles {
+            data {
+                _id
+                description
+                title
+                user {
+                    _id
+                    name
+                    email
+                    imageUrl
+                }
+            }
+            before
+            after
+        }
+        getAllImages {
+            data {
+                _id
+                title
+                imageUrl
+                user {
+                    _id
+                    name
+                    email
+                    imageUrl
+                }
+            }
+        }
+        getAllLinks {
+            data {
+                _id
+                title
+                url
+                user {
+                    _id
+                    name
+                    email
+                    imageUrl
+                }
+            }
+        }
+    }
+`;
+
 export const createArticle = gql`
     mutation CreateArticle(
         $title: String!
