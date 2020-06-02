@@ -9,7 +9,7 @@ export default gql`
     However, \`name\` and \`imageUrl\` are public.
     """
     type User {
-        id: ID @mask
+        id: ID!
         name: String!
         email: String @mask
         imageUrl: String!
