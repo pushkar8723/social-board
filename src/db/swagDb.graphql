@@ -1,3 +1,8 @@
+"""
+User Entity Schema.
+User should have an unique `email`.
+An User can create Article, Link or Image.
+"""
 type User {
     name: String!
     email: String! @unique
@@ -7,18 +12,34 @@ type User {
     images: [Image] @relation
 }
 
+"""
+Article Entity Schema.
+An article should have a tile and a description.
+And must have a user linked to it.
+"""
 type Article {
     title: String!
     description: String!
     user: User!
 }
 
+
+"""
+Link Entity Schema.
+A link should have a tile and a url.
+And must have a user linked to it.
+"""
 type Link {
     title: String!
     url: String!
     user: User! @relation
 }
 
+"""
+Image Entity Schema.
+A imdage should have a tile and a url.
+And must have a user linked to it.
+"""
 type Image {
     title: String!
     imageUrl: String!
@@ -26,8 +47,15 @@ type Image {
 }
 
 type Query {
+    "Returns the user for a given email. `null` is return if user isn't found."
     findUserByEmail(email: String!): User
+
+    "Returns all Article created on the platform."
     getAllArticles: [Article]
+
+    "Returns all Links created on the platform."
     getAllLinks: [Link]
+
+    "Returns all Images created on the platform."
     getAllImages: [Image]
 }

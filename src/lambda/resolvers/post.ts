@@ -1,6 +1,3 @@
-import { execute, makePromise } from 'apollo-link';
-import { HttpLink } from 'apollo-link-http';
-import fetch from 'cross-fetch';
 import {
     Article as UpstreamArticle,
     Link as UpstreamLink,
@@ -13,17 +10,45 @@ import {
 import {
     createArticle, createImage, createLink, getUserPosts,
     getArticle, getImage, getLink, deleteArticle, deleteLink, deleteImage, getAllPosts,
-} from './queries/postQueries';
+} from '../queries/postQueries';
 import { IContext } from '../types.d';
+import FaunaDB from '../datasource/faunaDb';
 
-const client = new HttpLink({
-    uri: 'https://graphql.fauna.com/graphql',
-    fetch,
-    headers: {
-        authorization: `bearer ${process.env.FAUNADB_SERVER_SECRET}`,
+const mapArticle = (article: UpstreamArticle): Article => ({
+    id: article._id,
+    title: article.title,
+    description: article.description,
+    user: {
+        id: article.user._id,
+        name: article.user.name,
+        email: article.user.email,
+        imageUrl: article.user.imageUrl,
     },
 });
 
+const mapLink = (link: UpstreamLink) : Link => ({
+    id: link._id,
+    title: link.title,
+    url: link.url,
+    user: {
+        id: link.user._id,
+        name: link.user.name,
+        email: link.user.email,
+        imageUrl: link.user.imageUrl,
+    },
+});
+
+const mapImage = (image: UpstreamImage) : Image => ({
+    id: image._id,
+    title: image.title,
+    imageUrl: image.imageUrl,
+    user: {
+        id: image.user._id,
+        name: image.user.name,
+        email: image.user.email,
+        imageUrl: image.user.imageUrl,
+    },
+});
 
 const resolvers = {
     Post: {
@@ -42,81 +67,23 @@ const resolvers = {
     },
     Query: {
         getPosts: async (parent: undefined, args: undefined, context: IContext) => {
-            const resp = await makePromise(
-                execute(
-                    client,
-                    { query: getUserPosts, variables: { id: context.user.id } },
-                ),
-            );
+            const resp = await FaunaDB.execute(getUserPosts, { id: context.user.id });
             if (resp.data.findUserByID) {
                 return [
-                    ...resp.data.findUserByID.articles.data.map(
-                        (article: UpstreamArticle) : Article => ({
-                            id: article._id,
-                            title: article.title,
-                            description: article.description,
-                            user: context.user,
-                        }),
-                    ),
-                    ...resp.data.findUserByID.links.data.map((link: UpstreamLink) : Link => ({
-                        id: link._id,
-                        title: link.title,
-                        url: link.url,
-                        user: context.user,
-                    })),
-                    ...resp.data.findUserByID.images.data.map((image: UpstreamImage) : Image => ({
-                        id: image._id,
-                        title: image.title,
-                        imageUrl: image.imageUrl,
-                        user: context.user,
-                    })),
+                    ...resp.data.findUserByID.articles.data.map(mapArticle),
+                    ...resp.data.findUserByID.links.data.map(mapLink),
+                    ...resp.data.findUserByID.images.data.map(mapImage),
                 ];
             }
             return null;
         },
         getAllPosts: async () => {
-            const resp = await makePromise(execute(client, { query: getAllPosts }));
+            const resp = await FaunaDB.execute(getAllPosts);
             if (resp.data) {
                 return [
-                    ...resp.data.getAllArticles.data.map(
-                        (article: UpstreamArticle) : Article => ({
-                            id: article._id,
-                            title: article.title,
-                            description: article.description,
-                            user: {
-                                id: article.user._id,
-                                name: article.user.name,
-                                email: article.user.email,
-                                imageUrl: article.user.imageUrl,
-                            },
-                        }),
-                    ),
-                    ...resp.data.getAllLinks.data.map(
-                        (link: UpstreamLink) : Link => ({
-                            id: link._id,
-                            title: link.title,
-                            url: link.url,
-                            user: {
-                                id: link.user._id,
-                                name: link.user.name,
-                                email: link.user.email,
-                                imageUrl: link.user.imageUrl,
-                            },
-                        }),
-                    ),
-                    ...resp.data.getAllImages.data.map(
-                        (image: UpstreamImage) : Image => ({
-                            id: image._id,
-                            title: image.title,
-                            imageUrl: image.imageUrl,
-                            user: {
-                                id: image.user._id,
-                                name: image.user.name,
-                                email: image.user.email,
-                                imageUrl: image.user.imageUrl,
-                            },
-                        }),
-                    ),
+                    ...resp.data.getAllArticles.data.map(mapArticle),
+                    ...resp.data.getAllLinks.data.map(mapLink),
+                    ...resp.data.getAllImages.data.map(mapImage),
                 ];
             }
             return null;
@@ -130,58 +97,28 @@ const resolvers = {
             } = arg;
             const { user } = context;
             if (type === 'Article') {
-                const resp = await makePromise(
-                    execute(
-                        client,
-                        {
-                            query: createArticle,
-                            variables: { title, description, userId: user.id },
-                        },
-                    ),
+                const resp = await FaunaDB.execute(
+                    createArticle,
+                    { title, description, userId: user.id },
                 );
                 if (resp.data.createArticle) {
-                    return {
-                        id: resp.data.createArticle._id,
-                        title: resp.data.createArticle.title,
-                        description: resp.data.createArticle.description,
-                        user: context.user,
-                    };
+                    return mapArticle(resp.data.createArticle);
                 }
             } else if (type === 'Link') {
-                const resp = await makePromise(
-                    execute(
-                        client,
-                        {
-                            query: createLink,
-                            variables: { title, url, userId: user.id },
-                        },
-                    ),
+                const resp = await FaunaDB.execute(
+                    createLink,
+                    { title, url, userId: user.id },
                 );
                 if (resp.data.createLink) {
-                    return {
-                        id: resp.data.createLink._id,
-                        title: resp.data.createLink.title,
-                        url: resp.data.createLink.url,
-                        user: context.user,
-                    };
+                    return mapLink(resp.data.createLink);
                 }
             } else if (type === 'Image') {
-                const resp = await makePromise(
-                    execute(
-                        client,
-                        {
-                            query: createImage,
-                            variables: { title, imageUrl, userId: user.id },
-                        },
-                    ),
+                const resp = await FaunaDB.execute(
+                    createImage,
+                    { title, imageUrl, userId: user.id },
                 );
                 if (resp.data.createImage) {
-                    return {
-                        id: resp.data.createImage._id,
-                        title: resp.data.createImage.title,
-                        imageUrl: resp.data.createImage.imageUrl,
-                        user: context.user,
-                    };
+                    return mapImage(resp.data.createImage);
                 }
             }
             return null;
@@ -191,90 +128,24 @@ const resolvers = {
             const { type, id } = arg;
             const { user } = context;
             if (type === 'Article') {
-                const resp = await makePromise(
-                    execute(
-                        client,
-                        {
-                            query: getArticle,
-                            variables: { id },
-                        },
-                    ),
-                );
+                const resp = await FaunaDB.execute(getArticle, { id });
                 if (resp.data.findArticleByID.user._id === user.id) {
-                    const deleteResp = await makePromise(
-                        execute(
-                            client,
-                            {
-                                query: deleteArticle,
-                                variables: { id },
-                            },
-                        ),
-                    );
-                    const { _id, title, description } = deleteResp.data.deleteArticle;
-                    return {
-                        id: _id,
-                        title,
-                        description,
-                        user: context.user,
-                    };
+                    const deleteResp = await FaunaDB.execute(deleteArticle, { id });
+                    return mapArticle(deleteResp.data.deleteArticle);
                 }
             }
             if (type === 'Link') {
-                const resp = await makePromise(
-                    execute(
-                        client,
-                        {
-                            query: getLink,
-                            variables: { id },
-                        },
-                    ),
-                );
+                const resp = await FaunaDB.execute(getLink, { id });
                 if (resp.data.findLinkByID.user._id === user.id) {
-                    const deleteResp = await makePromise(
-                        execute(
-                            client,
-                            {
-                                query: deleteLink,
-                                variables: { id },
-                            },
-                        ),
-                    );
-                    const { _id, title, url } = deleteResp.data.deleteLink;
-                    return {
-                        id: _id,
-                        title,
-                        url,
-                        user: context.user,
-                    };
+                    const deleteResp = await FaunaDB.execute(deleteLink, { id });
+                    return mapLink(deleteResp.data.deleteLink);
                 }
             }
             if (type === 'Image') {
-                const resp = await makePromise(
-                    execute(
-                        client,
-                        {
-                            query: getImage,
-                            variables: { id },
-                        },
-                    ),
-                );
+                const resp = await FaunaDB.execute(getImage, { id });
                 if (resp.data.findImageByID.user._id === user.id) {
-                    const deleteResp = await makePromise(
-                        execute(
-                            client,
-                            {
-                                query: deleteImage,
-                                variables: { id },
-                            },
-                        ),
-                    );
-                    const { _id, title, imageUrl } = deleteResp.data.deleteImage;
-                    return {
-                        id: _id,
-                        title,
-                        imageUrl,
-                        user: context.user,
-                    };
+                    const deleteResp = await FaunaDB.execute(deleteImage, { id });
+                    return mapImage(deleteResp.data.deleteImage);
                 }
             }
             return null;

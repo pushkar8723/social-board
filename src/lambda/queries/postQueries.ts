@@ -1,77 +1,88 @@
 import gql from 'graphql-tag';
+import { userFramgents } from './userQueries';
+
+const postFragments = {
+    article: gql`
+        fragment ArticleDetails on Article {
+            _id
+            title
+            description
+            user {
+                ...UserDetails
+            }
+        }
+        ${userFramgents.user}
+    `,
+    link: gql`
+        fragment LinkDetails on Link {
+            _id
+            title
+            url
+            user {
+                ...UserDetails
+            }
+        }
+        ${userFramgents.user}
+    `,
+    image: gql`
+        fragment ImageDetails on Image {
+            _id
+            title
+            imageUrl
+            user {
+                ...UserDetails
+            }
+        }
+        ${userFramgents.user}
+    `,
+};
 
 export const getUserPosts = gql`
     query GetUserPosts($id: ID!) {
         findUserByID(id: $id) {
             articles {
                 data {
-                    _id
-                    title
-                    description
+                    ...ArticleDetails
                 }
             }
             links {
                 data {
-                    _id
-                    title
-                    url
+                    ...LinkDetails
                 }
             }
             images {
                 data {
-                    _id
-                    title
-                    imageUrl
+                    ...ImageDetails
                 }
             }
         }
     }
+    ${postFragments.article}
+    ${postFragments.link}
+    ${postFragments.image}
 `;
 
 export const getAllPosts = gql`
     query GetAllPosts {
         getAllArticles {
             data {
-                _id
-                description
-                title
-                user {
-                    _id
-                    name
-                    email
-                    imageUrl
-                }
+                ...ArticleDetails
             }
-            before
-            after
         }
         getAllImages {
             data {
-                _id
-                title
-                imageUrl
-                user {
-                    _id
-                    name
-                    email
-                    imageUrl
-                }
+                ...ImageDetails
             }
         }
         getAllLinks {
             data {
-                _id
-                title
-                url
-                user {
-                    _id
-                    name
-                    email
-                    imageUrl
-                }
+                ...LinkDetails
             }
         }
     }
+    ${postFragments.article}
+    ${postFragments.link}
+    ${postFragments.image}
 `;
 
 export const createArticle = gql`
@@ -87,11 +98,10 @@ export const createArticle = gql`
                 connect: $userId
             }
         }) {
-            _id
-            title
-            description
+            ...ArticleDetails
         }
     }
+    ${postFragments.article}
 `;
 
 export const createLink = gql`
@@ -107,11 +117,10 @@ export const createLink = gql`
                 connect: $userId
             }
         }) {
-            _id
-            title
-            url
+            ...LinkDetails
         }
     }
+    ${postFragments.link}
 `;
 
 export const createImage = gql`
@@ -127,11 +136,10 @@ export const createImage = gql`
                 connect: $userId
             }
         }) {
-            _id
-            title
-            imageUrl
+            ...ImageDetails
         }
     }
+    ${postFragments.image}
 `;
 
 export const getArticle = gql`
@@ -167,29 +175,26 @@ export const getImage = gql`
 export const deleteArticle = gql`
     mutation DeleteArticle($id: ID!) {
         deleteArticle(id: $id) {
-            _id
-            title
-            description
+            ...ArticleDetails
         }
     }
+    ${postFragments.article}
 `;
 
 export const deleteLink = gql`
     mutation DeleteLink($id: ID!) {
         deleteLink(id: $id) {
-            _id
-            title
-            url
+            ...LinkDetails
         }
     }
+    ${postFragments.link}
 `;
 
 export const deleteImage = gql`
     mutation DeleteImage($id: ID!) {
         deleteImage(id: $id) {
-            _id
-            title
-            imageUrl
+            ...ImageDetails
         }
     }
+    ${postFragments.image}
 `;

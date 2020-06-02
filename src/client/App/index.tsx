@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { createGlobalStyle } from 'styled-components';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import AllPosts from './pages/AllPosts';
+import Header from './components/Header';
 
 const GlobalStyle = createGlobalStyle`
     * {
@@ -46,6 +48,7 @@ export interface IAppState {
     idToken: string;
     setUser: Dispatch<IUserState>;
     setIdToken: Dispatch<string>;
+    logout: () => void;
 }
 
 const AppState = createContext<IAppState>(null);
@@ -56,21 +59,31 @@ export default function App() {
     const savedUser = JSON.parse(localStorage.getItem('user'));
     const [user, setUser] = useState<IUserState>(savedUser);
     const [idToken, setIdToken] = useState<string>(localStorage.getItem('idToken'));
+    const logout = () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('idToken');
+        setUser(null);
+        setIdToken(null);
+    };
+
+    const state = {
+        user, idToken, setUser, setIdToken, logout,
+    };
 
     return (
-        <AppState.Provider
-            value={{
-                user, idToken, setUser, setIdToken,
-            }}
-        >
+        <AppState.Provider value={state}>
             <GlobalStyle />
             <Router>
+                <Header state={state} />
                 <Switch>
-                    <Route path="/home">
+                    <Route path="/my-posts">
                         <Home />
                     </Route>
-                    <Route path="/">
+                    <Route path="/login">
                         <Login />
+                    </Route>
+                    <Route path="/">
+                        <AllPosts />
                     </Route>
                 </Switch>
             </Router>

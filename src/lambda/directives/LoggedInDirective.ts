@@ -1,18 +1,9 @@
 import { AuthenticationError, SchemaDirectiveVisitor } from 'apollo-server-lambda';
-import { execute, makePromise } from 'apollo-link';
-import { HttpLink } from 'apollo-link-http';
 import { GraphQLField } from 'graphql';
-import fetch from 'cross-fetch';
-import { ITokenBody, IError, IContext } from '../types.d';
-import { getUser } from '../resolvers/queries/userQueries';
-
-const client = new HttpLink({
-    uri: 'https://graphql.fauna.com/graphql',
-    fetch,
-    headers: {
-        authorization: `bearer ${process.env.FAUNADB_SERVER_SECRET}`,
-    },
-});
+import GoogleOauth from '../datasource/googleOauth';
+import FaunaDB from '../datasource/faunaDb';
+import { IContext } from '../types.d';
+import { getUser } from '../queries/userQueries';
 
 class LoggedInDirective extends SchemaDirectiveVisitor {
     public visitFieldDefinition(field: GraphQLField<undefined, IContext>) {
@@ -21,15 +12,9 @@ class LoggedInDirective extends SchemaDirectiveVisitor {
         field.resolve = async function resolver(...args) {
             const { idToken } = args[2];
             if (idToken) {
-                const resp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${args[2].idToken}`);
-                if (resp.ok) {
-                    const body: ITokenBody & IError = await resp.json();
-                    const res = await makePromise(
-                        execute(
-                            client,
-                            { query: getUser, variables: { email: body.email } },
-                        ),
-                    );
+                const body = await GoogleOauth.getUser(idToken);
+                if (body) {
+                    const res = await FaunaDB.execute(getUser, { email: body.email });
                     if (res.data.findUserByEmail) {
                         // eslint-disable-next-line no-param-reassign
                         args[2].user = {

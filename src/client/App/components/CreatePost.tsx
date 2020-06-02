@@ -2,7 +2,7 @@ import React, { useState, FormEvent } from 'react';
 import { Mutation, MutationUpdaterFn, MutationFn } from 'react-apollo';
 import styled from 'styled-components';
 import Card from './Card';
-import { GET_POSTS, CREATE_POST } from '../shared/queries';
+import { GET_POSTS, GET_ALL_POSTS, CREATE_POST } from '../shared/queries';
 import { Post } from '../../../generated/types.d';
 
 const Title = styled.h3`
@@ -169,15 +169,33 @@ export default function (props: ICreatePost) {
 
     const cacheUpdateFn:
     MutationUpdaterFn<{ createPost: Post }> = (cache, { data: { createPost } }) => {
-        const { getPosts } = cache.readQuery({ query: GET_POSTS });
-        const updatedPosts = [
-            createPost,
-            ...getPosts,
-        ];
-        cache.writeQuery({
-            query: GET_POSTS,
-            data: { getPosts: updatedPosts },
-        });
+        try {
+            const { getPosts } = cache.readQuery({ query: GET_POSTS });
+            const updatedPosts = [
+                createPost,
+                ...getPosts,
+            ];
+            cache.writeQuery({
+                query: GET_POSTS,
+                data: { getPosts: updatedPosts },
+            });
+        } catch (e) {
+            // Ignore
+        }
+
+        try {
+            const { getAllPosts } = cache.readQuery({ query: GET_ALL_POSTS });
+            const updatedALLPosts = [
+                createPost,
+                ...getAllPosts,
+            ];
+            cache.writeQuery({
+                query: GET_ALL_POSTS,
+                data: { getAllPosts: updatedALLPosts },
+            });
+        } catch (e) {
+            // Ignore
+        }
         reset();
         setLoading(false);
     };

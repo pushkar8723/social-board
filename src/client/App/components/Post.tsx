@@ -3,11 +3,7 @@ import styled from 'styled-components';
 import { Mutation, MutationUpdaterFn } from 'react-apollo';
 import { Article, Link, Image } from '../../../generated/types.d';
 import Card from './Card';
-import { DELETE_POSTS, GET_POSTS } from '../shared/queries';
-
-const TitleContainer = styled.div`
-    display: flex;
-`;
+import { DELETE_POSTS, GET_POSTS, GET_ALL_POSTS } from '../shared/queries';
 
 const Title = styled.h3`
     margin: 10px 0;
@@ -32,11 +28,38 @@ const Btn = styled.button`
     }
 `;
 
-type Post = Article | Link | Image;
+const UserContainer = styled.div`
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    width: 100%;
+    align-items: center;
+
+    & > div {
+        flex: 1;
+        font-size: 12px;
+    }
+
+    & > div > h3 {
+        margin: 0;
+        font-size: 18px;
+    }
+`;
+
+const UserImg = styled.img`
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    border-radius: 50%;
+    vertical-align: middle;
+`;
+
+type Post = Article & Link & Image;
 
 interface IPostProp {
     post: Post;
-    idToken: string;
+    idToken?: string;
 }
 
 export default function (props: IPostProp) {
@@ -49,86 +72,59 @@ export default function (props: IPostProp) {
     };
 
     const updateFn: MutationUpdaterFn<{ deletePost: Post }> = (cache, { data: { deletePost } }) => {
-        const { getPosts } = cache.readQuery({ query: GET_POSTS });
-        const newPosts = getPosts.filter((item: Post) => item.id !== deletePost.id);
-        cache.writeQuery({
-            query: GET_POSTS,
-            data: { getPosts: newPosts },
-        });
+        try {
+            const { getPosts } = cache.readQuery({ query: GET_POSTS });
+            const newPosts = getPosts.filter((item: Post) => item.id !== deletePost.id);
+            cache.writeQuery({
+                query: GET_POSTS,
+                data: { getPosts: newPosts },
+            });
+        } catch (e) {
+            // Ignore
+        }
+        try {
+            const { getAllPosts } = cache.readQuery({ query: GET_ALL_POSTS });
+            const newAllPosts = getAllPosts.filter((item: Post) => item.id !== deletePost.id);
+            cache.writeQuery({
+                query: GET_ALL_POSTS,
+                data: { getAllPosts: newAllPosts },
+            });
+        } catch (e) {
+            // Ignore
+        }
     };
 
-    switch (post.__typename) {
-    case 'Article':
-        return (
-            <Mutation<{ deletePost: Article }>
-                context={{ headers: { id_token: idToken } }}
-                mutation={DELETE_POSTS}
-                variables={{ id: post.id, type: 'Article' }}
-                update={updateFn}
-            >
-                {(deleteArticle) => (
-                    <Card>
-                        <TitleContainer>
-                            <Title>{post.title}</Title>
-                            <Btn onClick={deletePostHandler(deleteArticle)} disabled={loading}>
-                                <span role="img" aria-label="Delete Post">🗑️</span>
-                            </Btn>
-                        </TitleContainer>
-                        <div>{post.description}</div>
-                    </Card>
-                )}
-            </Mutation>
-        );
-
-    case 'Link':
-        return (
-            <Mutation<{ deletePost: Link }>
-                context={{ headers: { id_token: idToken } }}
-                mutation={DELETE_POSTS}
-                variables={{ id: post.id, type: 'Link' }}
-                update={updateFn}
-            >
-                {(deleteLink) => (
-                    <Card>
-                        <TitleContainer>
-                            <Title>{post.title}</Title>
-                            <Btn onClick={deletePostHandler(deleteLink)} disabled={loading}>
-                                <span role="img" aria-label="Delete Post">🗑️</span>
-                            </Btn>
-                        </TitleContainer>
+    return (
+        <Mutation<{ deletePost: Post }>
+            context={{ headers: { id_token: idToken } }}
+            mutation={DELETE_POSTS}
+            variables={{ id: post.id, type: post.__typename }}
+            update={updateFn}
+        >
+            {(deleteArticle) => (
+                <Card>
+                    <UserContainer>
+                        <UserImg src={post.user.imageUrl} />
                         <div>
-                            <a href={post.url} target="_blank" rel="noopener noreferrer">{post.url}</a>
-                        </div>
-                    </Card>
-                )}
-            </Mutation>
-        );
-
-    case 'Image':
-        return (
-            <Mutation<{ deletePost: Image }>
-                context={{ headers: { id_token: idToken } }}
-                mutation={DELETE_POSTS}
-                variables={{ id: post.id, type: 'Image' }}
-                update={updateFn}
-            >
-                {(deleteImage) => (
-                    <Card>
-                        <TitleContainer>
+                            {`${post.user.name} posted:`}
                             <Title>{post.title}</Title>
-                            <Btn onClick={deletePostHandler(deleteImage)} disabled={loading}>
-                                <span role="img" aria-label="Delete Post">🗑️</span>
-                            </Btn>
-                        </TitleContainer>
-                        <div>
-                            <img src={post.imageUrl} alt={post.title} />
                         </div>
-                    </Card>
-                )}
-            </Mutation>
-        );
-
-    default:
-        return null;
-    }
+                        {
+                            post.user.id && (
+                                <Btn
+                                    onClick={deletePostHandler(deleteArticle)}
+                                    disabled={loading}
+                                >
+                                    <span role="img" aria-label="Delete Post">🗑️</span>
+                                </Btn>
+                            )
+                        }
+                    </UserContainer>
+                    { post.description && <div>{post.description}</div> }
+                    { post.url && <a href={post.url} target="_blank" rel="noreferrer noopener">{post.url}</a> }
+                    { post.imageUrl && <div><img src={post.imageUrl} alt={post.title} /></div> }
+                </Card>
+            )}
+        </Mutation>
+    );
 }

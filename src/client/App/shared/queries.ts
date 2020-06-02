@@ -1,53 +1,81 @@
 import gql from 'graphql-tag';
 
+const userfragment = {
+    entry: gql`
+        fragment UserDetails on User {
+            id
+            email
+            name
+            imageUrl
+        }
+    `,
+};
+
+const postfragments = {
+    entry: gql`
+        fragment PostDetails on Post {
+            id
+            title
+            __typename
+        }
+    `,
+};
+
+const postsfragments = {
+    entry: gql`
+        fragment PostsDetails on Post {
+            ... on Article {
+                description
+                ...PostDetails
+                user {
+                    ...UserDetails
+                }
+            }
+            ... on Link {
+                url
+                ...PostDetails
+                user {
+                    ...UserDetails
+                }
+            }
+            ... on Image {
+                imageUrl
+                ...PostDetails
+                user {
+                    ...UserDetails
+                }
+            }
+        }
+        ${postfragments.entry}
+        ${userfragment.entry}
+    `,
+};
+
+export const GET_ALL_POSTS = gql`
+    query GetAllPosts {
+        getAllPosts {
+            ...PostsDetails
+        }
+    }
+    ${postsfragments.entry}
+`;
+
 export const GET_POSTS = gql`
     query GetPosts {
         getPosts {
-            ... on Article {
-                id
-                title
-                description
-                __typename
-            }
-            ... on Link {
-                id
-                title
-                url
-                __typename
-            }
-            ... on Image {
-                id
-                title
-                imageUrl
-                __typename
-            }
+            ...PostsDetails
         }
     }
+    ${postsfragments.entry}
 `;
 
 export const DELETE_POSTS = gql`
     mutation DeletePost($id: ID!, $type: String!) {
         deletePost(id: $id, type: $type) {
-            ... on Article {
-                id
-                title
-                description
-                __typename
-            }
-            ... on Link {
-                id
-                title
-                url
-                __typename
-            }
-            ... on Image {
-                id
-                title
-                imageUrl
-                __typename
-            }
+            ...PostsDetails
         }
     }
+    ${postsfragments.entry}
 `;
 
 export const CREATE_POST = gql`
@@ -65,24 +93,8 @@ export const CREATE_POST = gql`
             url: $url
             imageUrl: $imageUrl
         ) {
-            ... on Article {
-                id
-                title
-                description
-                __typename
-            }
-            ... on Link {
-                id
-                title
-                url
-                __typename
-            }
-            ... on Image {
-                id
-                title
-                imageUrl
-                __typename
-            }
+            ...PostsDetails
         }
     }
+    ${postsfragments.entry}
 `;

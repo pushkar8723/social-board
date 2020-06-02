@@ -3,8 +3,8 @@ import { Article, Link, Image } from '../../../generated/types.d';
 import Post from './Post';
 
 interface IPostsProps {
-    posts: Array<Article | Link | Image>;
-    idToken: string;
+    posts: Array<Article & Link & Image>;
+    idToken?: string;
 }
 
 export default function (props: IPostsProps) {

@@ -1,68 +1,44 @@
-import { execute, makePromise } from 'apollo-link';
-import { HttpLink } from 'apollo-link-http';
-import fetch from 'cross-fetch';
 import { AuthenticationError } from 'apollo-server-lambda';
+import GoogleOauth from '../datasource/googleOauth';
+import FaunaDB from '../datasource/faunaDb';
 import { MutationLoginUserArgs, User } from '../../generated/types.d';
-import { getUser, createUser } from './queries/userQueries';
-import { ITokenBody, IError } from '../types.d';
+import { User as UpstreamUser } from '../../generated/upsteam.types.d';
+import { getUser, createUser } from '../queries/userQueries';
 
-const client = new HttpLink({
-    uri: 'https://graphql.fauna.com/graphql',
-    fetch,
-    headers: {
-        authorization: `bearer ${process.env.FAUNADB_SERVER_SECRET}`,
-    },
-});
+const mapUser = (user: UpstreamUser): User => {
+    const {
+        _id, name, email, imageUrl,
+    } = user;
+    return {
+        id: _id,
+        name,
+        email,
+        imageUrl,
+    };
+};
 
 const resolvers = {
     Mutation: {
         loginUser: async (parent: undefined, args: MutationLoginUserArgs): Promise<User> => {
-            const resp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${args.idToken}`);
-            if (resp.ok) {
-                const body: ITokenBody & IError = await resp.json();
+            const body = await GoogleOauth.getUser(args.idToken);
+            if (body) {
                 if (body.email) {
-                    const res = await makePromise(
-                        execute(
-                            client,
-                            { query: getUser, variables: { email: body.email } },
-                        ),
-                    );
+                    const res = await FaunaDB.execute(getUser, { email: body.email });
                     if (res.data.findUserByEmail) {
-                        const {
-                            _id, name, email, imageUrl,
-                        } = res.data.findUserByEmail;
-                        return {
-                            id: _id,
-                            name,
-                            email,
-                            imageUrl,
-                        };
+                        return mapUser(res.data.findUserByEmail);
                     }
-                    const createResp = await makePromise(
-                        execute(
-                            client,
-                            {
-                                query: createUser,
-                                variables: {
-                                    data: {
-                                        name: body.name,
-                                        email: body.email,
-                                        imageUrl: body.picture,
-                                    },
-                                },
+                    const createResp = await FaunaDB.execute(
+                        createUser,
+                        {
+                            data: {
+                                name: body.name,
+                                email: body.email,
+                                imageUrl: body.picture,
                             },
-                        ),
+                        },
                     );
                     if (createResp.data.createUser) {
-                        const {
-                            _id, name, email, imageUrl,
-                        } = createResp.data.createUser;
-                        return {
-                            id: _id,
-                            name,
-                            email,
-                            imageUrl,
-                        };
+                        return mapUser(createResp.data.createUser);
                     }
                 }
                 throw new AuthenticationError(body.error_description);
