@@ -1,5 +1,6 @@
 import React, { createContext, useState, Dispatch } from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import { withApollo, WithApolloClient } from 'react-apollo';
 import { createGlobalStyle } from 'styled-components';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -55,15 +56,18 @@ const AppState = createContext<IAppState>(null);
 
 export const AppStateConsumer = AppState.Consumer;
 
-export default function App() {
+function App(props: WithApolloClient<{}>) {
     const savedUser = JSON.parse(localStorage.getItem('user'));
     const [user, setUser] = useState<IUserState>(savedUser);
     const [idToken, setIdToken] = useState<string>(localStorage.getItem('idToken'));
     const logout = () => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('idToken');
-        setUser(null);
-        setIdToken(null);
+        props.client.clearStore();
+        props.client.onClearStore(async () => {
+            localStorage.removeItem('user');
+            localStorage.removeItem('idToken');
+            setUser(null);
+            setIdToken(null);
+        });
     };
 
     const state = {
@@ -90,3 +94,5 @@ export default function App() {
         </AppState.Provider>
     );
 }
+
+export default withApollo(App);

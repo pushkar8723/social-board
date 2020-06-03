@@ -110,7 +110,7 @@ export default function (props: IPostProp) {
                             <Title>{post.title}</Title>
                         </div>
                         {
-                            post.user.id && (
+                            post.user.email && (
                                 <Btn
                                     onClick={deletePostHandler(deleteArticle)}
                                     disabled={loading}

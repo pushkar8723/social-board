@@ -31,7 +31,7 @@ export default function () {
                             {
                                 ({ loading, error, data }: QueryResult) => {
                                     if (loading) {
-                                        return <div>...loading</div>;
+                                        return <h4>Loading...</h4>;
                                     }
                                     if (error) {
                                         error.graphQLErrors.forEach((err) => {
@@ -39,7 +39,7 @@ export default function () {
                                                 state.logout();
                                             }
                                         });
-                                        return <div>error!</div>;
+                                        return <div>{error.message}</div>;
                                     }
                                     if (data) {
                                         return (
