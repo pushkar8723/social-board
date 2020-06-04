@@ -6,7 +6,7 @@ import postSchema from './schema/post.schema';
 import linkSchema from './schema/link.schema';
 import LoggedInDirective from './directives/LoggedInDirective';
 import MaskDirective from './directives/MaskDirective';
-import FaunaDB from './datasource/FaunaDb';
+import FaunaDB from './datasource/FaunaDB';
 import GoogleOauth from './datasource/GoogleOauth';
 
 const server = new ApolloServer({

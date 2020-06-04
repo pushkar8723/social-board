@@ -1,5 +1,5 @@
 import { User } from '../generated/types.d';
-import FaunaDB from './datasource/FaunaDb';
+import FaunaDB from './datasource/FaunaDB';
 import GoogelOauth from './datasource/GoogleOauth';
 
 export interface ITokenBody {
