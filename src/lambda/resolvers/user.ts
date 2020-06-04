@@ -1,9 +1,8 @@
 import { AuthenticationError } from 'apollo-server-lambda';
-import GoogleOauth from '../datasource/googleOauth';
-import FaunaDB from '../datasource/faunaDb';
 import { MutationLoginUserArgs, User } from '../../generated/types.d';
 import { User as UpstreamUser } from '../../generated/upsteam.types.d';
 import { getUser, createUser } from '../queries/userQueries';
+import { IContext } from '../types.d';
 
 const mapUser = (user: UpstreamUser): User => {
     const {
@@ -19,15 +18,17 @@ const mapUser = (user: UpstreamUser): User => {
 
 const resolvers = {
     Mutation: {
-        loginUser: async (parent: undefined, args: MutationLoginUserArgs): Promise<User> => {
-            const body = await GoogleOauth.getUser(args.idToken);
+        loginUser: async (parent: undefined, args: MutationLoginUserArgs, context: IContext):
+        Promise<User> => {
+            const { faunaDB, googleOauth } = context.dataSources;
+            const body = await googleOauth.getUser(args.idToken);
             if (body) {
                 if (body.email) {
-                    const res = await FaunaDB.execute(getUser, { email: body.email });
+                    const res = await faunaDB.execute(getUser, { email: body.email });
                     if (res.data.findUserByEmail) {
                         return mapUser(res.data.findUserByEmail);
                     }
-                    const createResp = await FaunaDB.execute(
+                    const createResp = await faunaDB.execute(
                         createUser,
                         {
                             data: {

@@ -26,4 +26,4 @@ class FaunaDB extends DataSource {
     }
 }
 
-export default new FaunaDB();
+export default FaunaDB;

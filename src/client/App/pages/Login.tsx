@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import gql from 'graphql-tag';
-import { withApollo, WithApolloClient } from 'react-apollo';
 import { Redirect } from 'react-router-dom';
 import GoogleLogin, { GoogleLoginResponse } from 'react-google-login';
+import { withApollo, WithApolloClient } from 'react-apollo';
 import styled from 'styled-components';
-import { AppStateConsumer, IAppState } from '../index';
 import Card from '../components/Card';
-
-interface IHomeProps {
-    state: IAppState
-}
+import { LOGIN_USER, GET_APP_STATE } from '../shared/queries';
+import { IAppState } from '..';
+import { WithPageProps } from '../components/Page';
 
 const Container = styled.div`
     display: flex;
@@ -44,20 +41,14 @@ const InfoDiv = styled.div`
     justify-content: center;
 `;
 
-const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
+interface ILoginProps {
+    state: IAppState,
+}
+
+const Login = withApollo((props: WithApolloClient<ILoginProps>) => {
     const [error, setError] = useState();
     const [loading, setLoading] = useState(false);
-
-    const LOGIN_USER = gql`
-        mutation LoginUser($idToken: String!) {
-            loginUser(idToken: $idToken) {
-                id
-                name
-                email
-                imageUrl
-            }
-        }
-    `;
+    const { client } = props;
 
     const loginUser = async (user: GoogleLoginResponse) => {
         setLoading(true);
@@ -71,8 +62,16 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
         if (resp.data.loginUser) {
             localStorage.setItem('user', JSON.stringify(resp.data.loginUser));
             localStorage.setItem('idToken', user.tokenId);
-            props.state.setIdToken(user.tokenId);
-            props.state.setUser(resp.data.loginUser);
+            client.writeQuery({
+                query: GET_APP_STATE,
+                data: {
+                    AppState: {
+                        user: resp.data.loginUser,
+                        idToken: user.tokenId,
+                        __typename: 'AppState',
+                    },
+                },
+            });
         }
     };
 
@@ -102,10 +101,7 @@ const Login = withApollo((props: WithApolloClient<IHomeProps>) => {
     );
 });
 
-export default function () {
-    return (
-        <AppStateConsumer>
-            {(state) => (state.idToken ? <Redirect to={{ pathname: '/home' }} /> : <Login state={state} />)}
-        </AppStateConsumer>
-    );
+export default function (props: WithPageProps<{}>) {
+    const { state } = props;
+    return state.idToken ? <Redirect to={{ pathname: '/home' }} /> : <Login state={state} />;
 }

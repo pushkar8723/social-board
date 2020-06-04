@@ -1,11 +1,9 @@
 import React from 'react';
-import { Redirect } from 'react-router-dom';
 import { Query, QueryResult } from 'react-apollo';
 import styled from 'styled-components';
-import { AppStateConsumer, IAppState } from '../index';
 import PostsList from '../components/PostsList';
-import CreatePost from '../components/CreatePost';
-import { GET_POSTS } from '../shared/queries';
+import { GET_ALL_POSTS } from '../shared/queries';
+import { WithPageProps } from '../components/Page';
 
 const Container = styled.div`
     max-width: 100%;
@@ -13,52 +11,37 @@ const Container = styled.div`
     margin: 0 auto;
 `;
 
-export default function () {
+export default function (props: WithPageProps<{}>) {
+    const { state } = props;
     return (
-        <AppStateConsumer>
-            {(state: IAppState) => (state.idToken ? (
-                <>
-                    <Container>
-                        <Query
-                            query={GET_POSTS}
-                            context={{
-                                headers: {
-                                    id_token: state.idToken,
-                                },
-                            }}
-                            fetchPolicy="cache-first"
-                        >
-                            {
-                                ({ loading, error, data }: QueryResult) => {
-                                    if (loading) {
-                                        return <h4>Loading...</h4>;
-                                    }
-                                    if (error) {
-                                        error.graphQLErrors.forEach((err) => {
-                                            if (err.extensions.code === 'UNAUTHENTICATED') {
-                                                state.logout();
-                                            }
-                                        });
-                                        return <div>{error.message}</div>;
-                                    }
-                                    if (data) {
-                                        return (
-                                            <>
-                                                <CreatePost idToken={state.idToken} />
-                                                <PostsList
-                                                    posts={data.getPosts}
-                                                    idToken={state.idToken}
-                                                />
-                                            </>
-                                        );
-                                    }
-                                    return null;
-                                }
-                            }
-                        </Query>
-                    </Container>
-                </>
-            ) : <Redirect to={{ pathname: '/' }} />)}
-        </AppStateConsumer>
+        <Container>
+            <Query
+                query={GET_ALL_POSTS}
+                context={{ headers: { id_token: state.idToken } }}
+                fetchPolicy="cache-and-network"
+            >
+                {
+                    ({ loading, error, data }: QueryResult) => {
+                        if (loading) {
+                            return <h4>Loading...</h4>;
+                        }
+                        if (error) {
+                            return <div>{error.message}</div>;
+                        }
+                        if (data) {
+                            return (
+                                <>
+                                    <PostsList
+                                        posts={data.getAllPosts}
+                                        idToken={state.idToken}
+                                    />
+                                </>
+                            );
+                        }
+                        return null;
+                    }
+                }
+            </Query>
+        </Container>
     );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import { IAppState } from '..';
+import { WithPageProps } from './Page';
 
 const Toolbar = styled.div`
     padding: 10px;
@@ -38,12 +38,8 @@ const Button = styled.button`
     }
 `;
 
-interface IToolbarProps {
-    state: IAppState
-}
-
-export default function (props: IToolbarProps) {
-    const { state } = props;
+export default function (props: WithPageProps<{}>) {
+    const { state, logout } = props;
     return (
         <Toolbar>
             <span role="img" aria-label="Icon">📝</span>
@@ -53,7 +49,7 @@ export default function (props: IToolbarProps) {
             </TextContainer>
             {
                 state.idToken
-                    ? <Button onClick={state.logout}>Logout</Button>
+                    ? <Button onClick={logout}>Logout</Button>
                     : <Link to="/login">Login</Link>
             }
         </Toolbar>

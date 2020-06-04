@@ -19,4 +19,4 @@ class GoogelOauth extends DataSource {
     }
 }
 
-export default new GoogelOauth();
+export default GoogelOauth;

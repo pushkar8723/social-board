@@ -6,6 +6,8 @@ import postSchema from './schema/post.schema';
 import linkSchema from './schema/link.schema';
 import LoggedInDirective from './directives/LoggedInDirective';
 import MaskDirective from './directives/MaskDirective';
+import FaunaDB from './datasource/FaunaDb';
+import GoogleOauth from './datasource/GoogleOauth';
 
 const server = new ApolloServer({
     schema: mergeSchemas({
@@ -23,6 +25,10 @@ const server = new ApolloServer({
             mask: MaskDirective,
         },
         mergeDirectives: true,
+    }),
+    dataSources: () => ({
+        faunaDB: new FaunaDB(),
+        googleOauth: new GoogleOauth(),
     }),
     introspection: true,
     playground: true,

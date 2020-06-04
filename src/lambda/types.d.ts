@@ -1,4 +1,6 @@
 import { User } from '../generated/types.d';
+import FaunaDB from './datasource/FaunaDb';
+import GoogelOauth from './datasource/GoogleOauth';
 
 export interface ITokenBody {
     name: string;
@@ -15,4 +17,8 @@ export interface IError {
 export interface IContext {
     user: User;
     idToken: string;
+    dataSources: {
+        faunaDB: FaunaDB,
+        googleOauth: GoogelOauth
+    }
 }

@@ -1,11 +1,12 @@
-import React, { createContext, useState, Dispatch } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import { withApollo, WithApolloClient } from 'react-apollo';
 import { createGlobalStyle } from 'styled-components';
 import Login from './pages/Login';
+import MyPosts from './pages/MyPosts';
 import Home from './pages/Home';
-import AllPosts from './pages/AllPosts';
 import Header from './components/Header';
+import Page from './components/Page';
 
 const GlobalStyle = createGlobalStyle`
     * {
@@ -47,51 +48,41 @@ export interface IUserState {
 export interface IAppState {
     user: IUserState;
     idToken: string;
-    setUser: Dispatch<IUserState>;
-    setIdToken: Dispatch<string>;
-    logout: () => void;
 }
 
-const AppState = createContext<IAppState>(null);
-
-export const AppStateConsumer = AppState.Consumer;
-
 function App(props: WithApolloClient<{}>) {
-    const savedUser = JSON.parse(localStorage.getItem('user'));
-    const [user, setUser] = useState<IUserState>(savedUser);
-    const [idToken, setIdToken] = useState<string>(localStorage.getItem('idToken'));
-    const logout = () => {
-        props.client.clearStore();
-        props.client.onClearStore(async () => {
-            localStorage.removeItem('user');
-            localStorage.removeItem('idToken');
-            setUser(null);
-            setIdToken(null);
-        });
-    };
+    const user = JSON.parse(localStorage.getItem('user'));
+    const idToken = localStorage.getItem('idToken');
+    const { client } = props;
 
-    const state = {
-        user, idToken, setUser, setIdToken, logout,
-    };
+    client.writeData({
+        data: {
+            AppState: {
+                user,
+                idToken,
+                __typename: 'AppState',
+            },
+        },
+    });
 
     return (
-        <AppState.Provider value={state}>
+        <>
             <GlobalStyle />
             <Router>
-                <Header state={state} />
+                <Page component={Header} />
                 <Switch>
                     <Route path="/my-posts">
-                        <Home />
+                        <Page component={MyPosts} />
                     </Route>
                     <Route path="/login">
-                        <Login />
+                        <Page component={Login} />
                     </Route>
                     <Route path="/">
-                        <AllPosts />
+                        <Page component={Home} />
                     </Route>
                 </Switch>
             </Router>
-        </AppState.Provider>
+        </>
     );
 }
 

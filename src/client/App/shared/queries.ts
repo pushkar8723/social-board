@@ -98,3 +98,28 @@ export const CREATE_POST = gql`
     }
     ${postsfragments.entry}
 `;
+
+export const GET_APP_STATE = gql`
+    query GetAppState{
+        AppState @client {
+            user {
+                id
+                name
+                email
+                imageUrl
+            }
+            idToken
+        }
+    }
+`;
+
+export const LOGIN_USER = gql`
+    mutation LoginUser($idToken: String!) {
+        loginUser(idToken: $idToken) {
+            id
+            name
+            email
+            imageUrl
+        }
+    }
+`;

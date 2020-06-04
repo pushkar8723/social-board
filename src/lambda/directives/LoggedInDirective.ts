@@ -1,7 +1,5 @@
 import { AuthenticationError, SchemaDirectiveVisitor } from 'apollo-server-lambda';
 import { GraphQLField } from 'graphql';
-import GoogleOauth from '../datasource/googleOauth';
-import FaunaDB from '../datasource/faunaDb';
 import { IContext } from '../types.d';
 import { getUser } from '../queries/userQueries';
 
@@ -11,10 +9,11 @@ class LoggedInDirective extends SchemaDirectiveVisitor {
         // eslint-disable-next-line no-param-reassign
         field.resolve = async function resolver(...args) {
             const { idToken } = args[2];
+            const { faunaDB, googleOauth } = args[2].dataSources;
             if (idToken) {
-                const body = await GoogleOauth.getUser(idToken);
+                const body = await googleOauth.getUser(idToken);
                 if (body) {
-                    const res = await FaunaDB.execute(getUser, { email: body.email });
+                    const res = await faunaDB.execute(getUser, { email: body.email });
                     if (res.data.findUserByEmail) {
                         // eslint-disable-next-line no-param-reassign
                         args[2].user = {

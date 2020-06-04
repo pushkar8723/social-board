@@ -1,8 +1,6 @@
 import { SchemaDirectiveVisitor } from 'apollo-server-lambda';
 import { GraphQLField } from 'graphql';
 import { Path } from 'graphql/jsutils/Path';
-import GoogleOauth from '../datasource/googleOauth';
-import FaunaDB from '../datasource/faunaDb';
 import { IContext } from '../types.d';
 import { User } from '../../generated/types.d';
 import { getUser } from '../queries/userQueries';
@@ -20,11 +18,12 @@ export default class MaskDirective extends SchemaDirectiveVisitor {
         const { resolve } = field;
         // eslint-disable-next-line no-param-reassign
         field.resolve = async function resolver(...args) {
+            const { googleOauth, faunaDB } = args[2].dataSources;
             if (getBaseKey(args[3].path) !== 'loginUser') {
                 if (args[2].idToken && !args[2].user) {
-                    const body = await GoogleOauth.getUser(args[2].idToken);
+                    const body = await googleOauth.getUser(args[2].idToken);
                     if (body) {
-                        const res = await FaunaDB.execute(getUser, { email: body.email });
+                        const res = await faunaDB.execute(getUser, { email: body.email });
                         if (res.data.findUserByEmail) {
                             // eslint-disable-next-line no-param-reassign
                             args[2].user = {

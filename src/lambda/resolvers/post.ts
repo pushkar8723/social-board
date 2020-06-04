@@ -12,7 +12,6 @@ import {
     getArticle, getImage, getLink, deleteArticle, deleteLink, deleteImage, getAllPosts,
 } from '../queries/postQueries';
 import { IContext } from '../types.d';
-import FaunaDB from '../datasource/faunaDb';
 
 const mapArticle = (article: UpstreamArticle): Article => ({
     id: article._id,
@@ -67,7 +66,10 @@ const resolvers = {
     },
     Query: {
         getPosts: async (parent: undefined, args: undefined, context: IContext) => {
-            const resp = await FaunaDB.execute(getUserPosts, { id: context.user.id });
+            const resp = await context.dataSources.faunaDB.execute(
+                getUserPosts,
+                { id: context.user.id },
+            );
             if (resp.data.findUserByID) {
                 return [
                     ...resp.data.findUserByID.articles.data.map(mapArticle),
@@ -77,8 +79,8 @@ const resolvers = {
             }
             return null;
         },
-        getAllPosts: async () => {
-            const resp = await FaunaDB.execute(getAllPosts);
+        getAllPosts: async (parent: undefined, args: undefined, context: IContext) => {
+            const resp = await context.dataSources.faunaDB.execute(getAllPosts);
             if (resp.data) {
                 return [
                     ...resp.data.getAllArticles.data.map(mapArticle),
@@ -97,7 +99,7 @@ const resolvers = {
             } = arg;
             const { user } = context;
             if (type === 'Article') {
-                const resp = await FaunaDB.execute(
+                const resp = await context.dataSources.faunaDB.execute(
                     createArticle,
                     { title, description, userId: user.id },
                 );
@@ -105,7 +107,7 @@ const resolvers = {
                     return mapArticle(resp.data.createArticle);
                 }
             } else if (type === 'Link') {
-                const resp = await FaunaDB.execute(
+                const resp = await context.dataSources.faunaDB.execute(
                     createLink,
                     { title, url, userId: user.id },
                 );
@@ -113,7 +115,7 @@ const resolvers = {
                     return mapLink(resp.data.createLink);
                 }
             } else if (type === 'Image') {
-                const resp = await FaunaDB.execute(
+                const resp = await context.dataSources.faunaDB.execute(
                     createImage,
                     { title, imageUrl, userId: user.id },
                 );
@@ -123,28 +125,34 @@ const resolvers = {
             }
             return null;
         },
-        deletePost: async (parent: undefined, arg: MutationDeletePostArgs, context: any):
+        deletePost: async (parent: undefined, arg: MutationDeletePostArgs, context: IContext):
             Promise<Article | Link | Image> => {
             const { type, id } = arg;
             const { user } = context;
             if (type === 'Article') {
-                const resp = await FaunaDB.execute(getArticle, { id });
+                const resp = await context.dataSources.faunaDB.execute(getArticle, { id });
                 if (resp.data.findArticleByID.user._id === user.id) {
-                    const deleteResp = await FaunaDB.execute(deleteArticle, { id });
+                    const deleteResp = await context.dataSources.faunaDB.execute(
+                        deleteArticle, { id },
+                    );
                     return mapArticle(deleteResp.data.deleteArticle);
                 }
             }
             if (type === 'Link') {
-                const resp = await FaunaDB.execute(getLink, { id });
+                const resp = await context.dataSources.faunaDB.execute(getLink, { id });
                 if (resp.data.findLinkByID.user._id === user.id) {
-                    const deleteResp = await FaunaDB.execute(deleteLink, { id });
+                    const deleteResp = await context.dataSources.faunaDB.execute(
+                        deleteLink, { id },
+                    );
                     return mapLink(deleteResp.data.deleteLink);
                 }
             }
             if (type === 'Image') {
-                const resp = await FaunaDB.execute(getImage, { id });
+                const resp = await context.dataSources.faunaDB.execute(getImage, { id });
                 if (resp.data.findImageByID.user._id === user.id) {
-                    const deleteResp = await FaunaDB.execute(deleteImage, { id });
+                    const deleteResp = await context.dataSources.faunaDB.execute(
+                        deleteImage, { id },
+                    );
                     return mapImage(deleteResp.data.deleteImage);
                 }
             }
