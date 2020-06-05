@@ -1,9 +1,14 @@
 import React, { useState, FormEvent } from 'react';
 import { Mutation, MutationUpdaterFn, MutationFn } from 'react-apollo';
 import styled from 'styled-components';
+import Markdown from 'markdown-to-jsx';
 import Card from './Card';
 import { GET_POSTS, GET_ALL_POSTS, CREATE_POST } from '../shared/queries';
-import { Post } from '../../../generated/types.d';
+import {
+    Post, User, Article,
+    Image, Link,
+} from '../../../generated/types.d';
+import { Tabs, Tab } from './Tabs';
 
 const Title = styled.h3`
     margin: 10px 0;
@@ -35,8 +40,7 @@ const Input = styled.input`
     height: 30px;
     min-width: 100px;
     font-size: 14px;
-    padding: 10px;
-    flex: 1;
+    padding: 3px 10px;
 
     &:focus {
         box-shadow: 0 0 0 3px #64baff;
@@ -57,7 +61,6 @@ const TextArea = styled.textarea`
     min-width: 100px;
     font-size: 14px;
     padding: 10px;
-    flex: 1;
     min-height: 100px;
 
     &:focus {
@@ -115,7 +118,8 @@ const SubmitBtn = styled.button`
 `;
 
 interface ICreatePost {
-    idToken: String
+    idToken: String,
+    user: User,
 }
 
 export default function (props: ICreatePost) {
@@ -160,9 +164,36 @@ export default function (props: ICreatePost) {
     ) => {
         event.preventDefault();
         setLoading(true);
+        const response: Article | Image | Link = {
+            id: '12345678',
+            title,
+            description,
+            url,
+            imageUrl,
+            user: {
+                ...props.user,
+                id: 'dummyId',
+                email: null,
+            },
+        };
+        switch (type) {
+        case 'Article':
+            response.__typename = 'Article';
+            break;
+
+        case 'Image':
+            response.__typename = 'Image';
+            break;
+
+        default:
+            response.__typename = 'Image';
+        }
         submitFn({
             variables: {
                 type, title, description, url, imageUrl,
+            },
+            optimisticResponse: {
+                createPost: response,
             },
         });
     };
@@ -230,14 +261,23 @@ export default function (props: ICreatePost) {
                             </Label>
                             {
                                 type === 'Article' && (
-                                    <Label>
-                                        <span>Description</span>
-                                        <TextArea
-                                            required
-                                            value={description}
-                                            onChange={onDescriptionChange}
-                                        />
-                                    </Label>
+                                    <>
+                                        <Tabs>
+                                            <Tab name="Write">
+                                                <Label>
+                                                    <span>Description</span>
+                                                    <TextArea
+                                                        required
+                                                        value={description}
+                                                        onChange={onDescriptionChange}
+                                                    />
+                                                </Label>
+                                            </Tab>
+                                            <Tab name="Preview">
+                                                <Markdown>{description}</Markdown>
+                                            </Tab>
+                                        </Tabs>
+                                    </>
                                 )
                             }
                             {

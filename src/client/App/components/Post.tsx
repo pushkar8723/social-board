@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Mutation, MutationUpdaterFn } from 'react-apollo';
+import Markdown from 'markdown-to-jsx';
 import { Article, Link, Image } from '../../../generated/types.d';
 import Card from './Card';
 import { DELETE_POSTS, GET_POSTS, GET_ALL_POSTS } from '../shared/queries';
@@ -120,7 +121,7 @@ export default function (props: IPostProp) {
                             )
                         }
                     </UserContainer>
-                    { post.description && <div>{post.description}</div> }
+                    { post.description && <Markdown>{post.description}</Markdown> }
                     { post.url && <a href={post.url} target="_blank" rel="noreferrer noopener">{post.url}</a> }
                     { post.imageUrl && <div><img src={post.imageUrl} alt={post.title} /></div> }
                 </Card>

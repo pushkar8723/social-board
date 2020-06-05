@@ -43,7 +43,7 @@ export default function (props: WithPageProps<{}>) {
                             if (data) {
                                 return (
                                     <>
-                                        <CreatePost idToken={state.idToken} />
+                                        <CreatePost idToken={state.idToken} user={state.user} />
                                         <PostsList
                                             posts={data.getPosts}
                                             idToken={state.idToken}

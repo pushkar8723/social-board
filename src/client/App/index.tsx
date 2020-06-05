@@ -36,6 +36,10 @@ const GlobalStyle = createGlobalStyle`
         flex-direction: column;
         max-width: 100%;
     }
+
+    input:focus {
+        box-shadow: 0 0 0 2px #64baff;
+    }
 `;
 
 export interface IUserState {

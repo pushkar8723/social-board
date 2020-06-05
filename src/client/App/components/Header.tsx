@@ -9,6 +9,9 @@ const Toolbar = styled.div`
     display: flex;
     align-items: center;
     background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 
     & > span {
         font-size: 32px;
