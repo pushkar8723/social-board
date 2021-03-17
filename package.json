@@ -21,7 +21,7 @@
     "apollo-datasource": "^0.7.1",
     "apollo-link": "^1.2.14",
     "apollo-link-http": "^1.5.17",
-    "apollo-server-lambda": "^2.13.0",
+    "apollo-server-lambda": "^2.14.2",
     "cross-fetch": "^3.0.4",
     "graphql": "^15.0.0",
     "graphql-tag": "^2.10.3",
