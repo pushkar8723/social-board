@@ -22,7 +22,7 @@
     "apollo-link": "^1.2.14",
     "apollo-link-http": "^1.5.17",
     "apollo-server-lambda": "^2.14.2",
-    "cross-fetch": "^3.0.4",
+    "cross-fetch": "^3.1.5",
     "graphql": "^15.0.0",
     "graphql-tag": "^2.10.3",
     "markdown-to-jsx": "^6.11.4",
