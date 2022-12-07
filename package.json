@@ -38,7 +38,7 @@
     "@babel/core": "^7.9.6",
     "@babel/preset-env": "^7.9.6",
     "@babel/register": "^7.9.0",
-    "@graphql-codegen/cli": "^1.14.0",
+    "@graphql-codegen/cli": "^1.21.8",
     "@graphql-codegen/fragment-matcher": "^1.15.0",
     "@graphql-codegen/typescript": "^1.14.0",
     "@types/markdown-to-jsx": "^6.11.0",
